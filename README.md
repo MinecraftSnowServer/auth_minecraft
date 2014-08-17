@@ -31,7 +31,8 @@ $conf['auth']['minecraft']['server']   = 'localhost';
 $conf['auth']['minecraft']['user']     = 'authme';
 $conf['auth']['minecraft']['password'] = 'password';
 
-$conf['auth']['minecraft']['database'] = 'minecraft_authme';$conf['auth']['minecraft']['checkPass']= "SELECT password FROM authme WHERE username='%{user}'";
+$conf['auth']['minecraft']['database'] = 'minecraft_authme';
+$conf['auth']['minecraft']['checkPass']= "SELECT password FROM authme WHERE username='%{user}'";
 $conf['auth']['minecraft']['getUserInfo'] = "SELECT password, nick AS name, email AS mail
     FROM authme
     WHERE username='%{user}'";
