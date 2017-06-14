@@ -1,7 +1,12 @@
 base   authminecraft
 author sntc06
+<<<<<<< HEAD
 email  sntc06@gmail.com
 date   2017-06-12
+=======
+email  taya86334@gmail.com
+date   2013-03-20
+>>>>>>> 545b3facd206f670a2d26bd70c783dedf84438a9
 name   authminecraft plugin
 desc   Auth for minecraft AuthMe
 url    http://blog.snowtec.org
