@@ -1,0 +1,8 @@
+base   authminecraft
+author sntc06
+email  sntc06@gmail.com
+date   2017-06-12
+name   authminecraft plugin
+desc   Auth for minecraft AuthMe
+url    http://blog.snowtec.org
+
