@@ -1,83 +1,126 @@
-#DokuWiki-AuthMe
+# DokuWiki-AuthMe
 
 An CraftBukkit AuthMe authentication backend for DokuWiki.
 
 Refer to [offical DokuWiki API](https://www.dokuwiki.org/devel:auth_plugins) for more information.
+Based on `authpdo` plugin: https://www.dokuwiki.org/plugin:authpdo
 
-##Installation
+## Installation
 
 Put the php file in the `lib/plugins` folder.
 
-##Configuration
+## Configuration
 
 Create a new file, `local.protected.php`, in DokuWiki `conf` folder.
 
-###Example configuration
+### Example configuration
 
 ```
-<?php
-//require_once('mysql.conf.php');
-// MySQL + Minecraft backend
+$conf['plugin']['authminecraft']['debug'] = 0;
+$conf['plugin']['authminecraft']['dsn'] = 'mysql:host=localhost;dbname=minecraft_authme';
+$conf['plugin']['authminecraft']['user'] = 'authme';
+$conf['plugin']['authminecraft']['pass'] = '';
 
-$conf['superuser']='sntc06';
-$conf['openregister']= 1;
-//$conf['disableactions'] = 'register';
-$conf['forwardClearPass'] = 0;
-$conf['useacl']      = 1;
-$conf['defaultgroup'] = 'user';
-$conf['authtype'] = 'authminecraft';
-$conf['auth']['minecraft']['debug'] = 1;
-$conf['auth']['minecraft']['server']   = 'localhost';
-$conf['auth']['minecraft']['user']     = 'authme';
-$conf['auth']['minecraft']['password'] = 'password';
+/**
+ * statement to select a single user identified by its login name
+ *
+ * input: :user
+ * return: user, name, mail, (clear|hash), [uid], [*]
+ */
+$conf['plugin']['authminecraft']['select-user'] = ' 
+    SELECT `uid`,
+    `username` AS "user",
+    `realname` AS "name",
+    `password` AS "hash",
+    `email` AS "mail"
+    FROM `authme`
+    WHERE `authme`.`username` = :user';
 
-$conf['auth']['minecraft']['database'] = 'minecraft_authme';
-$conf['auth']['minecraft']['checkPass']= "SELECT password FROM authme WHERE username='%{user}'";
-$conf['auth']['minecraft']['getUserInfo'] = "SELECT password, nick AS name, email AS mail
-    FROM authme
-    WHERE username='%{user}'";
-$conf['auth']['minecraft']['getGroups']   = "SELECT name as `group`
-    FROM groups g, authme u, usergroup ug
-    WHERE u.uid = ug.uid
-    AND g.gid = ug.gid
-    AND u.username='%{user}'";
-$conf['auth']['minecraft']['getUsers']    = "SELECT DISTINCT username AS user
-    FROM authme AS u
-    LEFT JOIN usergroup AS ug ON u.uid=ug.uid
-    LEFT JOIN groups AS g ON ug.gid=g.gid";
-$conf['auth']['minecraft']['FilterLogin'] = "u.username LIKE '%{user}'";
-$conf['auth']['minecraft']['FilterName']  = "u.nick LIKE '%{name}'";
-$conf['auth']['minecraft']['FilterEmail'] = "u.email LIKE '%{email}'";
-$conf['auth']['minecraft']['FilterGroup'] = "g.name LIKE '%{group}'";
-$conf['auth']['minecraft']['SortOrder']   = "ORDER BY username";
-$conf['auth']['minecraft']['addUser']     = "INSERT INTO authme
-    (username, password, email, nick)
-    VALUES ('%{user}', '%{pass}', '%{email}',
-        '%{name}')";
-$conf['auth']['minecraft']['addGroup']    = "INSERT INTO groups (name)
-    VALUES ('%{group}')";
-$conf['auth']['minecraft']['addUserGroup']= "INSERT INTO usergroup (uid, gid)
-    VALUES ('%{uid}', '%{gid}')";
+$conf['plugin']['authminecraft']['check-pass'] = ''; 
 
-$conf['auth']['minecraft']['delGroup']    = "DELETE FROM groups
-    WHERE gid='%{gid}'";
-$conf['auth']['minecraft']['getUserID']   = "SELECT uid AS id
-    FROM authme
-    WHERE username='%{user}'";
-$conf['auth']['minecraft']['delUser']     = "DELETE FROM authme
-    WHERE uid='%{uid}'";
-$conf['auth']['minecraft']['delUserRefs'] = "DELETE FROM usergroup
-    WHERE uid='%{uid}'";
-$conf['auth']['minecraft']['updateUser']  = "UPDATE authme SET";
-$conf['auth']['minecraft']['UpdateLogin'] = "username='%{user}'";
-$conf['auth']['minecraft']['UpdatePass']  = "password='%{pass}'";
-$conf['auth']['minecraft']['UpdateEmail'] = "email='%{email}'";
-$conf['auth']['minecraft']['UpdateName']  = "nick='%{name}'";
-$conf['auth']['minecraft']['UpdateTarget']= "WHERE uid=%{uid}";
-$conf['auth']['minecraft']['delUserGroup']= "DELETE FROM usergroup
-    WHERE uid='%{uid}'
-    AND gid='%{gid}'";
-$conf['auth']['minecraft']['getGroupID']  = "SELECT gid AS id
-    FROM groups
-    WHERE name='%{group}'";
+$conf['plugin']['authminecraft']['select-user-groups'] = 'SELECT name as `group`
+FROM groups g, authme u, usergroup ug
+WHERE u.uid = ug.uid
+AND g.gid = ug.gid
+AND u.username= :user';
+/**
+ * Select all the existing group names                                                                                  
+ *
+ * return: group, [gid], [*]
+ */
+$conf['plugin']['authminecraft']['select-groups'] = 'SELECT `gid` AS "gid",
+`name AS "group"
+FROM `groups`';
+
+/**
+ * Create a new user
+ *
+ * input: :user, :name, :mail, (:clear|:hash)
+ */
+$conf['plugin']['authminecraft']['insert-user'] = '';
+
+/**
+ * Remove a user
+ *
+ * input: :user, [:uid], [*]
+ */
+$conf['plugin']['authminecraft']['delete-user'] = '';
+/**                                                                                                                     
+ * list user names matching the given criteria
+ *
+ * Make sure the list is distinct and sorted by user name. Apply the given limit and offset
+ *
+ * input: :user, :name, :mail, :group, :start, :end, :limit
+ * out: user
+ */
+$conf['plugin']['authminecraft']['list-users'] = '
+SELECT DISTINCT `username` AS "user"
+  FROM `authme` AS U,
+       `groups` AS G
+ WHERE G.`name` LIKE :group
+   AND U.`username` LIKE :user
+   AND U.`realname`  LIKE :name
+   AND U.`email`  LIKE :mail
+ORDER BY `username` LIMIT :start, :limit
+
+';
+
+/**
+ * count user names matching the given criteria
+ *
+ * Make sure the counted list is distinct
+ *
+ * input: :user, :name, :mail, :group
+ * out: count
+ */
+$conf['plugin']['authminecraft']['count-users'] = '';
+$conf['plugin']['authminecraft']['update-user-info'] = '';
+$conf['plugin']['authminecraft']['update-user-login'] = '';
+$conf['plugin']['authminecraft']['update-user-pass'] = '';
+
+/**
+ * Create a new group
+ *
+ * input: :group
+ */
+$conf['plugin']['authminecraft']['insert-group'] = '';
+
+/**
+ * Make user join group
+ *
+ * input: :user, [:uid], group, [:gid], [*]
+ */
+$conf['plugin']['authminecraft']['join-group'] = '
+INSERT INTO `usergroup` ( `uid`, `gid`) VALUES ( :uid, :gid);
+';
+
+/**
+ * Make user leave group
+ *
+ * input: :user, [:uid], group, [:gid], [*]
+ */
+$conf['plugin']['authminecraft']['leave-group'] = '
+DELETE FROM `usergroup` WHERE `uid` = :uid AND `gid` = :gid;
+';
+
 ```
